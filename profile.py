@@ -169,12 +169,12 @@ for name in nodeList:
     # Secret sauce.
     fpga.SubNodeOf(node)
     iface1 = fpga.addInterface("if0")
-    iface2 = fpga.addInterface("if1")
+    # iface2 = fpga.addInterface("if1")
     # Must specify the IPv4 address on all stitched links
     iface1.addAddress(pg.IPv4Address(str(next(addrs)), str(subnet.netmask)))
-    iface2.addAddress(pg.IPv4Address(str(next(addrs)), str(subnet.netmask)))
+    # iface2.addAddress(pg.IPv4Address(str(next(addrs)), str(subnet.netmask)))
     interfaces.append(iface1)
-    interfaces.append(iface2)
+    # interfaces.append(iface2)
     
 ###################################################
 # The part below is from Ezra's "stiching" script!
