@@ -1,5 +1,4 @@
-"""Setup script to stitch a link from an OCT FPGA P4 node through the FABRIC OCT-MGHPCC facility port
-"""
+"""Setup script to stitch a link from an OCT FPGA P4 node through the FABRIC OCT-MGHPCC facility port."""
 
 # Import the Portal object.
 import geni.portal as portal
@@ -12,10 +11,10 @@ import geni.rspec.emulab as emulab
 from ipaddress import IPv4Network, IPv6Network
 
 
-NODE_MIN=1
-NODE_MAX=4
-VLAN_MIN=3110
-VLAN_MAX=3119
+NODE_MIN = 1
+NODE_MAX = 4
+VLAN_MIN = 3110
+VLAN_MAX = 3119
 
 # Create a portal context.
 pc = portal.Context()
@@ -45,11 +44,15 @@ toolVersion = [('2023.1'),
                ('2020.1.1'),
                ('2020.1'),
                ('Do not install tools')]
-                   
-pc.defineParameter("nodes","List of nodes",
-                   portal.ParameterType.STRING,"",
+
+# Add a parameter for workflow (new addition)
+workflowList = [('Vitis', 'Vitis workflow'),
+                ('Custom', 'Custom workflow')]
+
+pc.defineParameter("nodes", "List of nodes",
+                   portal.ParameterType.STRING, "",
                    longDescription="Comma-separated list of nodes (e.g., pc151,pc153).")
-                   
+
 pc.defineParameter("cluster", "Select Cluster",
                    portal.ParameterType.STRING,
                    clusters[0], clusters,
@@ -59,38 +62,43 @@ pc.defineParameter("toolVersion", "Tool Version",
                    portal.ParameterType.STRING,
                    toolVersion[0], toolVersion,
                    longDescription="Select a tool version. It is recommended to use the latest version for the deployment workflow. For more information, visit https://www.xilinx.com/products/boards-and-kits/alveo/u280.html#gettingStarted")
-                   
+
 pc.defineParameter("osImage", "Select Image",
                    portal.ParameterType.IMAGE,
                    imageList[0], imageList,
                    longDescription="Supported operating systems are Ubuntu and CentOS.")
-                   
+
+# Define a new parameter for selecting the workflow
+pc.defineParameter("workflow", "Select Workflow",
+                   portal.ParameterType.STRING, workflowList[0][0], workflowList,
+                   longDescription="Select the workflow to be used (e.g., Vitis or Custom).")
+
 # Optional ephemeral blockstore
 pc.defineParameter("tempFileSystemSize", "Temporary Filesystem Size",
-                   portal.ParameterType.INTEGER, 0,advanced=True,
+                   portal.ParameterType.INTEGER, 0, advanced=True,
                    longDescription="The size in GB of a temporary file system to mount on each of your " +
                    "nodes. Temporary means that they are deleted when your experiment is terminated. " +
                    "The images provided by the system have small root partitions, so use this option " +
                    "if you expect you will need more space to build your software packages or store " +
                    "temporary files.")
-                   
+
 # Instead of a size, ask for all available space.
-pc.defineParameter("tempFileSystemMax",  "Temp Filesystem Max Space",
+pc.defineParameter("tempFileSystemMax", "Temp Filesystem Max Space",
                     portal.ParameterType.BOOLEAN, False,
                     advanced=True,
                     longDescription="Instead of specifying a size for your temporary filesystem, " +
                     "check this box to allocate all available disk space. Leave the size above as zero.")
 
 pc.defineParameter("tempFileSystemMount", "Temporary Filesystem Mount Point",
-                   portal.ParameterType.STRING,"/mydata",advanced=True,
+                   portal.ParameterType.STRING, "/mydata", advanced=True,
                    longDescription="Mount the temporary file system at this mount point; in general you " +
                    "you do not need to change this, but we provide the option just in case your software " +
                    "is finicky.")
-                   
+
 # Retrieve the values the user specifies during instantiation.
 params = pc.bindParameters()
 
-# parameterize the vlan to use
+# Define VLAN parameters and check validity
 portal.context.defineParameter("vlan", "VLAN ID", portal.ParameterType.INTEGER, 3110)
 portal.context.defineParameter("ip_subnet", "IP_SUBNET", portal.ParameterType.STRING, "192.168.1.0/24")
 portal.context.defineParameter("node_count", "NODE_COUNT", portal.ParameterType.INTEGER, NODE_MIN)
@@ -98,15 +106,15 @@ params = portal.context.bindParameters()
 
 # Check parameter validity.
 if params.node_count < NODE_MIN or params.node_count > NODE_MAX:
-    portal.context.reportError( portal.ParameterError( "Node count must be between {} and {} inclusive".format(NODE_MIN, NODE_MAX) ) )
+    portal.context.reportError(portal.ParameterError("Node count must be between {} and {} inclusive".format(NODE_MIN, NODE_MAX)))
     pass
 
 if params.osImage == "urn:publicid:IDN+emulab.net+image+emulab-ops//CENTOS8-64-STD" and params.toolVersion == "2020.1":
     pc.reportError(portal.ParameterError("OS and tool version mismatch.", ["osImage"]))
     pass
-    
+
 if params.vlan < VLAN_MIN or params.vlan > VLAN_MAX:
-    portal.context.reportError( portal.ParameterError( "VLAN ID must be in the range {}-{}".format(VLAN_MIN, VLAN_MAX) ) )
+    portal.context.reportError(portal.ParameterError("VLAN ID must be in the range {}-{}".format(VLAN_MIN, VLAN_MAX)))
 
 try:
     subnet = IPv4Network(unicode(params.ip_subnet))
@@ -115,7 +123,7 @@ except Exception as e:
         subnet = IPv6Network(unicode(params.ip_subnet))
     except Exception as e:
         raise e
-  
+
 pc.verifyParameters()
 
 # Make a LAN
@@ -134,13 +142,11 @@ nodeList = params.nodes.split(',')
 i = 0
 for name in nodeList:
     # Create a node and add it to the request
-    # name = "node" + str(i)
     node = request.RawPC(name)
     node.disk_image = params.osImage
-    # Assign to the node hosting the FPGA.
     node.hardware_type = "fpga-alveo"
     node.component_manager_id = "urn:publicid:IDN+cloudlab.umass.edu+authority+cm"
-    
+
     # Optional Blockstore
     if params.tempFileSystemSize > 0 or params.tempFileSystemMax:
         bs = node.Blockstore(name + "-bs", params.tempFileSystemMount)
@@ -148,15 +154,12 @@ for name in nodeList:
             bs.size = "0GB"
         else:
             bs.size = str(params.tempFileSystemSize) + "GB"
-            pass
         bs.placement = "any"
-        pass
-    
+
+    # Now passing both TOOLVERSION and WORKFLOW to the post-boot script
     if params.toolVersion != "Do not install tools":
-        node.addService(pg.Execute(shell="bash", command="sudo /local/repository/post-boot.sh " + params.toolVersion + " >> /local/repository/output_log.txt"))
-        pass
-    pass
-    
+        node.addService(pg.Execute(shell="bash", command="sudo /local/repository/post-boot.sh " + params.workflow + " " + params.toolVersion + " >> /local/repository/output_log.txt"))
+
     # Since we want to create network links to the FPGA, it has its own identity.
     fpga = request.RawPC("fpga-" + name)
     # UMass cluster
@@ -165,25 +168,17 @@ for name in nodeList:
     fpga.component_id = "fpga-" + name
     # Use the default image for the type of the node selected.
     fpga.setUseTypeDefaultImage()
-    
+
     # Secret sauce.
     fpga.SubNodeOf(node)
     iface1 = fpga.addInterface("if0")
-    # iface2 = fpga.addInterface("if1")
-    # Must specify the IPv4 address on all stitched links
     iface1.addAddress(pg.IPv4Address(str(next(addrs)), str(subnet.netmask)))
-    # iface2.addAddress(pg.IPv4Address(str(next(addrs)), str(subnet.netmask)))
     interfaces.append(iface1)
-    # interfaces.append(iface2)
-    
-###################################################
-# The part below is from Ezra's "stiching" script!
 
 # Request a special node that maps to the scidmz FABRIC port
 fabric = request.Node("stitch-node", "emulab-connect")
 fabric.Site("stitch")
 
-# Magic.
 fabric.component_id = "interconnect-fabric"
 # XXX special handling for stitch fabric component_manager_id
 if (params.cluster == 'urn:publicid:IDN+cloudlab.umass.edu+authority+cm' or
@@ -203,12 +198,10 @@ lan.setVlanTag(params.vlan)
 for iface in interfaces:
     lan.addInterface(iface)
 
-# Many nodes have a single physical experimental interface, so use
-# link multiplexing to make sure it maps to any node.
-lan.link_multiplexing = True;
+lan.link_multiplexing = True
 
 # Use best effort on stitched links.
-lan.best_effort = True;
+lan.best_effort = True
 
 # Print the RSpec to the enclosing page.
 pc.printRequestRSpec(request)
