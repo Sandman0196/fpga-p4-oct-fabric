@@ -45,12 +45,8 @@ toolVersion = [('2023.1'),
                ('2020.1'),
                ('Do not install tools')]
 
-# Add a parameter for workflow (new addition)
-workflow = [
-    ('Vitis', 'Vitis workflow'),
-    ('Vivado', 'Vivado workflow'),
-    ('Custom', 'Custom workflow')
-]
+
+workflow = [('Vitis'),('Vivado'),('Custom')]
 
 pc.defineParameter("nodes", "List of nodes",
                    portal.ParameterType.STRING, "",
@@ -71,7 +67,7 @@ pc.defineParameter("osImage", "Select Image",
                    imageList[0], imageList,
                    longDescription="Supported operating systems are Ubuntu and CentOS.")
 
-# Define a new parameter for selecting the workflow
+
 pc.defineParameter("workflow", "Select Workflow",
                    portal.ParameterType.STRING, workflow[0], workflow,
                    longDescription="Select the workflow to be used (e.g., Vitis or Custom).")
