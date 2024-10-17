@@ -126,11 +126,12 @@ disable_pcie_fatal_error() {
 }
 
 # Initialize environment variables
-XRT_BASE_PATH="/proj/oct-fpga-p4-PG0/tools/deployment/xrt"
-SHELL_BASE_PATH="/proj/oct-fpga-p4-PG0/tools/deployment/shell"
-XBFLASH_BASE_PATH="/proj/oct-fpga-p4-PG0/tools/xbflash"
-VITIS_BASE_PATH="/proj/oct-fpga-p4-PG0/tools/Xilinx/Vitis"
-CONFIG_FPGA_PATH="/proj/oct-fpga-p4-PG0/tools/post-boot"
+XRT_BASE_PATH="/proj/octfpga-PG0/tools/deployment/xrt"
+SHELL_BASE_PATH="/proj/octfpga-PG0/tools/deployment/shell"
+XBFLASH_BASE_PATH="/proj/octfpga-PG0/tools/xbflash"
+VITIS_BASE_PATH="/proj/octfpga-PG0/tools/Xilinx/Vitis"
+CONFIG_FPGA_PATH="/proj/octfpga-PG0/tools/post-boot"
+
 OSVERSION=$(grep '^ID=' /etc/os-release | awk -F= '{print $2}' | tr -d '"')
 VERSION_ID=$(grep '^VERSION_ID=' /etc/os-release | awk -F= '{print $2}' | tr -d '"')
 OSVERSION="$OSVERSION-$VERSION_ID"
