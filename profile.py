@@ -46,7 +46,7 @@ toolVersion = [('2023.1'),
                ('Do not install tools')]
 
 # Add a parameter for workflow (new addition)
-workflow = [('Vitis', 'Vivado')]
+workflow = [('Vitis', 'Vivado', 'Vitis workflow', 'Custom workflow')]
 
 pc.defineParameter("nodes", "List of nodes",
                    portal.ParameterType.STRING, "",
@@ -63,7 +63,7 @@ pc.defineParameter("toolVersion", "Tool Version",
                    longDescription="Select a tool version. It is recommended to use the latest version for the deployment workflow. For more information, visit https://www.xilinx.com/products/boards-and-kits/alveo/u280.html#gettingStarted")
 
 pc.defineParameter("osImage", "Select Image",
-                   portal.ParameterType.AGE,
+                   portal.ParameterType.IMAGE,
                    imageList[0], imageList,
                    longDescription="Supported operating systems are Ubuntu and CentOS.")
 
