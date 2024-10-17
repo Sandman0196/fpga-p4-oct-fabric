@@ -69,7 +69,7 @@ pc.defineParameter("osImage", "Select Image",
 
 # Define a new parameter for selecting the workflow
 pc.defineParameter("workflow", "Select Workflow",
-                   portal.ParameterType.STRING, workflow[0][0], workflow,
+                   portal.ParameterType.STRING, workflow[0], workflow,
                    longDescription="Select the workflow to be used (e.g., Vitis or Custom).")
 
 # Optional ephemeral blockstore
