@@ -17,9 +17,15 @@ install_xrt() {
 # Check if XRT is already installed (from oct-u280)
 check_xrt() {
     if [[ "$OSVERSION" == "ubuntu-20.04" ]] || [[ "$OSVERSION" == "ubuntu-22.04" ]]; then
-        XRT_INSTALL_INFO=`apt list --installed 2>/dev/null | grep "xrt" | grep "$XRT_VERSION"`
+        XRT_INSTALL_INFO=$(apt list --installed 2>/dev/null | grep "xrt" | grep "$XRT_VERSION")
     elif [[ "$OSVERSION" == "centos-8" ]]; then
-        XRT_INSTALL_INFO=`yum list installed 2>/dev/null | grep "xrt" | grep "$XRT_VERSION"`
+        XRT_INSTALL_INFO=$(yum list installed 2>/dev/null | grep "xrt" | grep "$XRT_VERSION")
+    fi
+
+    if [[ -n "$XRT_INSTALL_INFO" ]]; then
+        return 0
+    else
+        return 1
     fi
 }
 
@@ -181,4 +187,23 @@ if [ "$WORKFLOW" = "Vitis" ] ; then
         install_shellpkg
         check_shellpkg
         if [ $? == 0 ]; then
-            echo "Shell was successfully installed. Flashing
+            echo "Shell was successfully installed. Flashing..."
+            flash_card
+            /usr/local/bin/post-boot-fpga
+            #echo "Cold rebooting..."
+            #sudo -u geniuser perl /local/repository/cold-reboot.pl
+        else
+            echo "Error: Shell installation failed."
+            exit 1
+        fi
+    fi
+    if check_requested_shell ; then
+        echo "FPGA shell verified."
+    else
+        echo "Error: FPGA shell couldn't be verified."
+        exit 1
+    fi
+else
+    echo "Custom flow selected."
+    install_xbflash
+fi    
