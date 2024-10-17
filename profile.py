@@ -46,7 +46,11 @@ toolVersion = [('2023.1'),
                ('Do not install tools')]
 
 # Add a parameter for workflow (new addition)
-workflow = [('Vitis', 'Vivado', 'Vitis workflow', 'Custom workflow')]
+workflow = [
+    ('Vitis', 'Vitis workflow'),
+    ('Vivado', 'Vivado workflow'),
+    ('Custom', 'Custom workflow')
+]
 
 pc.defineParameter("nodes", "List of nodes",
                    portal.ParameterType.STRING, "",
