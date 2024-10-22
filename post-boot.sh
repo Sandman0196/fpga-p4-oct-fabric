@@ -155,6 +155,11 @@ XRT_VERSION=$(grep ^$COMB: $SCRIPT_PATH/spec.txt | awk -F':' '{print $2}' | awk 
 FACTORY_SHELL="xilinx_u280_GOLDEN_8"
 NODE_ID=$(hostname | cut -d'.' -f1)
 
+echo "Workflow:"
+echo $WORKFLOW
+echo "Tool version:"
+echo $TOOLVERSION
+
 # Execute installation and configuration
 echo "Detecting FPGA cards..."
 detect_cards
